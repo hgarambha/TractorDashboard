@@ -1,0 +1,14 @@
+# Python dependencies for J1939 Tractor Data Logger
+# Install with: pip3 install -r requirements.txt
+
+# CAN bus communication
+python-can>=4.0.0
+
+# J1939 DBC file parsing
+cantools>=37.0.0
+
+# Configuration file parsing
+PyYAML>=6.0
+
+# Note: No Google API libraries needed!
+# We use Apps Script Web App which only requires standard urllib

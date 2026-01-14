@@ -1,0 +1,74 @@
+# J1939 Tractor Data Logger Configuration
+# =========================================
+
+# ─────────────────────────────────────────────────────────────
+# CAN BUS SETTINGS
+# ─────────────────────────────────────────────────────────────
+can:
+  interface: can0
+  bitrate: 250000
+  log_unknown: true
+
+# ─────────────────────────────────────────────────────────────
+# SAMPLING SETTINGS
+# ─────────────────────────────────────────────────────────────
+sampling:
+  # How often to send data (seconds)
+  interval: 30
+  max_buffer_size: 100
+
+# ─────────────────────────────────────────────────────────────
+# GOOGLE APPS SCRIPT (No Google Cloud Project needed!)
+# ─────────────────────────────────────────────────────────────
+apps_script:
+  # Paste your Web App URL here after deploying the Apps Script
+  # It looks like: https://script.google.com/macros/s/XXXXX/exec
+  webapp_url: YOUR_WEBAPP_URL_HERE
+
+# ─────────────────────────────────────────────────────────────
+# OFFLINE STORAGE
+# ─────────────────────────────────────────────────────────────
+offline:
+  enabled: true
+  storage_dir: /home/pi/j1939-logger/offline_data
+  max_storage_mb: 500
+  connectivity_check_interval: 60
+
+# ─────────────────────────────────────────────────────────────
+# J1939 PGNs TO MONITOR
+# ─────────────────────────────────────────────────────────────
+pgns:
+  - name: Engine Controller 1
+    pgn: 61444
+    signals: [EngineSpeed, EnginePercentTorque]
+  
+  - name: Engine Temperature
+    pgn: 65262
+    signals: [EngineCoolantTemp, EngineOilTemp]
+  
+  - name: Fluid Level
+    pgn: 65263
+    signals: [FuelLevel, EngineOilPressure]
+  
+  - name: Vehicle Speed
+    pgn: 65265
+    signals: [WheelBasedVehicleSpeed]
+  
+  - name: Vehicle Position (GPS)
+    pgn: 65267
+    signals: [Latitude, Longitude]
+  
+  - name: Direction/Speed (GPS)
+    pgn: 65256
+    signals: [Heading, GPSSpeed, Altitude]
+  
+  - name: Ambient Conditions
+    pgn: 65269
+    signals: [AmbientAirTemp, BarometricPressure]
+
+# ─────────────────────────────────────────────────────────────
+# LOGGING
+# ─────────────────────────────────────────────────────────────
+logging:
+  level: INFO
+  file: /var/log/j1939-logger.log

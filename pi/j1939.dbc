@@ -1,0 +1,61 @@
+VERSION ""
+
+NS_ :
+
+BS_:
+
+BU_:
+
+BO_ 2364539904 EEC1: 8 Vector__XXX
+ SG_ EngineSpeed : 24|16@1+ (0.125,0) [0|8031.875] "rpm" Vector__XXX
+ SG_ EnginePercentTorque : 16|8@1+ (1,-125) [-125|125] "%" Vector__XXX
+ SG_ DriverDemandTorque : 8|8@1+ (1,-125) [-125|125] "%" Vector__XXX
+ SG_ ActualEngineTorque : 40|8@1+ (1,-125) [-125|125] "%" Vector__XXX
+
+BO_ 2364540672 ET1: 8 Vector__XXX
+ SG_ EngineCoolantTemp : 0|8@1+ (1,-40) [-40|210] "degC" Vector__XXX
+ SG_ FuelTemp : 8|8@1+ (1,-40) [-40|210] "degC" Vector__XXX
+ SG_ EngineOilTemp : 16|16@1+ (0.03125,-273) [-273|1734.96875] "degC" Vector__XXX
+
+BO_ 2364540928 EFL: 8 Vector__XXX
+ SG_ FuelLevel : 8|8@1+ (0.4,0) [0|100] "%" Vector__XXX
+ SG_ EngineOilPressure : 24|8@1+ (4,0) [0|1000] "kPa" Vector__XXX
+ SG_ CoolantLevel : 40|8@1+ (0.4,0) [0|100] "%" Vector__XXX
+
+BO_ 2364541184 CCVS: 8 Vector__XXX
+ SG_ WheelBasedVehicleSpeed : 8|16@1+ (0.00390625,0) [0|250.996] "km/h" Vector__XXX
+ SG_ CruiseControlActive : 24|2@1+ (1,0) [0|3] "" Vector__XXX
+ SG_ ParkingBrakeSwitch : 26|2@1+ (1,0) [0|3] "" Vector__XXX
+
+BO_ 2364542208 VP: 8 Vector__XXX
+ SG_ Latitude : 0|32@1+ (0.0000001,-210) [-210|210] "deg" Vector__XXX
+ SG_ Longitude : 32|32@1+ (0.0000001,-210) [-210|210] "deg" Vector__XXX
+
+BO_ 2364541440 VDS: 8 Vector__XXX
+ SG_ Heading : 0|16@1+ (0.0078125,0) [0|501.992] "deg" Vector__XXX
+ SG_ GPSSpeed : 16|16@1+ (0.00390625,0) [0|250.996] "km/h" Vector__XXX
+ SG_ Altitude : 32|16@1+ (0.125,-2500) [-2500|5531.875] "m" Vector__XXX
+
+BO_ 2364541696 TD: 8 Vector__XXX
+ SG_ Seconds : 0|8@1+ (0.25,0) [0|59.75] "s" Vector__XXX
+ SG_ Minutes : 8|8@1+ (1,0) [0|59] "min" Vector__XXX
+ SG_ Hours : 16|8@1+ (1,0) [0|23] "hr" Vector__XXX
+ SG_ Day : 32|8@1+ (0.25,0) [0|31] "day" Vector__XXX
+ SG_ Month : 24|8@1+ (1,0) [0|12] "month" Vector__XXX
+ SG_ Year : 40|8@1+ (1,1985) [1985|2235] "year" Vector__XXX
+
+BO_ 2364542720 AMB: 8 Vector__XXX
+ SG_ AmbientAirTemp : 24|16@1+ (0.03125,-273) [-273|1734.96875] "degC" Vector__XXX
+ SG_ BarometricPressure : 8|8@1+ (0.5,0) [0|125] "kPa" Vector__XXX
+
+CM_ BO_ 2364539904 "Electronic Engine Controller 1 - PGN 61444";
+CM_ BO_ 2364540672 "Engine Temperature 1 - PGN 65262";
+CM_ BO_ 2364540928 "Engine Fluid Level/Pressure - PGN 65263";
+CM_ BO_ 2364541184 "Cruise Control/Vehicle Speed - PGN 65265";
+CM_ BO_ 2364542208 "Vehicle Position - PGN 65267";
+CM_ BO_ 2364541440 "Vehicle Direction/Speed - PGN 65256";
+CM_ BO_ 2364541696 "Time/Date - PGN 65254";
+CM_ BO_ 2364542720 "Ambient Conditions - PGN 65269";
+
+BA_DEF_ BO_ "VFrameFormat" ENUM "StandardCAN","ExtendedCAN","reserved","J1939PG";
+BA_DEF_DEF_ "VFrameFormat" "J1939PG";
