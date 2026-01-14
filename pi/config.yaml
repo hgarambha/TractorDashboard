@@ -23,7 +23,7 @@ sampling:
 apps_script:
   # Paste your Web App URL here after deploying the Apps Script
   # It looks like: https://script.google.com/macros/s/XXXXX/exec
-  webapp_url: YOUR_WEBAPP_URL_HERE
+  webapp_url: https://script.google.com/macros/s/AKfycbwVF9FtLNUTn0k80wht7NvMoyw6K_-uEY15_Je4ZHcwSUphwioerIHOV-Lvt1_ziIrrgg/exec
 
 # ─────────────────────────────────────────────────────────────
 # OFFLINE STORAGE
@@ -72,3 +72,4 @@ pgns:
 logging:
   level: INFO
   file: /var/log/j1939-logger.log
+
