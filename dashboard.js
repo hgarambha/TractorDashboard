@@ -141,8 +141,9 @@ class TractorDashboard {
         setTxt('rpmValue', Math.round(latest.EngineSpeed));
         setW('rpmFill', pct(latest.EngineSpeed, 3000));
 
-        setTxt('speedValue', latest.WheelBasedVehicleSpeed?.toFixed(1));
-        setW('speedFill', pct(latest.WheelBasedVehicleSpeed, 40));
+        const speed = parseFloat(latest.WheelBasedVehicleSpeed);
+        setTxt('speedValue', !isNaN(speed) ? speed.toFixed(1) : '--');
+        setW('speedFill', pct(speed, 40));
 
         setTxt('fuelValue', Math.round(latest.FuelLevel));
         setW('fuelFill', pct(latest.FuelLevel, 100));
