@@ -1,14 +1,17 @@
 /**
- * Tractor Dashboard - Data Fetching (Apps Script Version)
- * Fixed: Includes cache busting to ensure fresh data on GitHub Pages
+ * Tractor Dashboard - Data Fetching
  */
 
 class TractorDashboard {
     constructor(config) {
-        this.config = config;
+        // Fallback if config is missing or URL placeholder is left
+        this.config = config || {};
+
         this.chart = null;
         this.data = [];
         this.isConnected = false;
+
+        console.log("Dashboard initialized with config:", this.config);
 
         this.init();
     }
@@ -16,7 +19,7 @@ class TractorDashboard {
     async init() {
         this.setupChart();
         this.setupEventListeners();
-        await this.fetchData();
+        await this.fetchData(); // Fetch immediately
         this.startAutoRefresh();
     }
 
@@ -24,29 +27,29 @@ class TractorDashboard {
         console.log("Fetching data...");
         this.updateConnectionStatus('connecting');
 
-        if (!this.config.webAppUrl || this.config.webAppUrl.includes('YOUR_SCRIPT_ID')) {
-            console.warn("Web App URL not configured");
+        const url = this.config.webAppUrl;
+
+        // Validation
+        if (!url || url.includes('YOUR_SCRIPT_ID')) {
+            console.error("❌ Web App URL is missing or incorrect in index.html");
             this.updateConnectionStatus('error');
-            if (this.data.length === 0) this.loadDemoData();
+            document.getElementById('statusText').textContent = "Config Error (Check Console)";
             return;
         }
 
         try {
-            // Fetch from Apps Script Web App (GET request)
-            // CRITICAL FIX: Add cache busting timestamp and headers
-            const url = `${this.config.webAppUrl}?action=view&hours=24&_t=${Date.now()}`;
+            // Fetch from Apps Script Web App
+            // We use 'no-cors' mode cautiously, but typically Apps Script returns JSON
+            // If CORS is an issue, we rely on the script returning simple JSON with correct headers.
+            // Note: standard fetch follows redirects. 
+            const response = await fetch(`${url}?action=view&hours=24`);
 
-            const response = await fetch(url, {
-                method: 'GET',
-                redirect: 'follow', // Follow Google redirects
-                headers: {
-                    'Content-Type': 'text/plain;charset=utf-8', // Simple content type avoids preflight
-                }
-            });
-
-            if (!response.ok) throw new Error('Network response was not ok');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
 
             const result = await response.json();
+            console.log("Data received:", result);
 
             if (result.status === 'ok' && Array.isArray(result.data)) {
                 this.data = this.parseData(result.data);
@@ -54,6 +57,7 @@ class TractorDashboard {
                 this.updateConnectionStatus('connected');
                 this.updateLastUpdate();
             } else {
+                console.warn("Invalid data structure:", result);
                 throw new Error('Invalid data format');
             }
 
@@ -67,11 +71,13 @@ class TractorDashboard {
         return rawData.map(d => ({
             ...d,
             date: new Date(d.Timestamp)
-        })).sort((a, b) => b.date - a.date);
+        })).sort((a, b) => b.date - a.date); // Sort newest first
     }
 
     setupChart() {
-        const ctx = document.getElementById('historyChart').getContext('2d');
+        const ctx = document.getElementById('historyChart')?.getContext('2d');
+        if (!ctx) return;
+
         this.historyChart = new Chart(ctx, {
             type: 'line',
             data: {
@@ -123,47 +129,54 @@ class TractorDashboard {
 
     updateDashboard() {
         if (this.data.length === 0) return;
+
         const latest = this.data[0];
 
-        // Update Gauges & Stats
-        this.setText('rpmValue', Math.round(latest.EngineSpeed));
-        this.setWidth('rpmFill', this.calcPercent(latest.EngineSpeed, 0, 3000));
+        // Helpers
+        const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = (val != null && val !== undefined) ? val : '--'; };
+        const setW = (id, pct) => { const el = document.getElementById(id); if (el) el.style.width = `${Math.max(0, Math.min(100, pct))}%`; };
+        const pct = (val, max) => (val || 0) / max * 100;
 
-        this.setText('speedValue', latest.WheelBasedVehicleSpeed?.toFixed(1));
-        this.setWidth('speedFill', this.calcPercent(latest.WheelBasedVehicleSpeed, 0, 40));
+        // Update Gauges
+        setTxt('rpmValue', Math.round(latest.EngineSpeed));
+        setW('rpmFill', pct(latest.EngineSpeed, 3000));
 
-        this.setText('fuelValue', Math.round(latest.FuelLevel));
-        this.setWidth('fuelFill', this.calcPercent(latest.FuelLevel, 0, 100));
+        setTxt('speedValue', latest.WheelBasedVehicleSpeed?.toFixed(1));
+        setW('speedFill', pct(latest.WheelBasedVehicleSpeed, 40));
 
-        this.setText('tempValue', Math.round(latest.EngineCoolantTemp));
-        this.setWidth('tempFill', this.calcPercent(latest.EngineCoolantTemp, 0, 120));
+        setTxt('fuelValue', Math.round(latest.FuelLevel));
+        setW('fuelFill', pct(latest.FuelLevel, 100));
 
-        this.setText('oilPressure', Math.round(latest.EngineOilPressure));
-        this.setText('ambientTemp', latest.AmbientAirTemp?.toFixed(1));
-        this.setText('torque', Math.round(latest.EnginePercentTorque));
-        this.setText('altitude', Math.round(latest.Altitude));
+        setTxt('tempValue', Math.round(latest.EngineCoolantTemp));
+        setW('tempFill', pct(latest.EngineCoolantTemp, 120));
 
-        this.setText('latValue', latest.Latitude?.toFixed(5));
-        this.setText('lonValue', latest.Longitude?.toFixed(5));
-        this.setText('headingValue', Math.round(latest.Heading) + '°');
+        // Update Stats
+        setTxt('oilPressure', Math.round(latest.EngineOilPressure));
+        setTxt('ambientTemp', latest.AmbientAirTemp?.toFixed(1));
+        setTxt('torque', Math.round(latest.EnginePercentTorque));
+        setTxt('altitude', Math.round(latest.Altitude));
+
+        // Location
+        setTxt('latValue', latest.Latitude?.toFixed(5));
+        setTxt('lonValue', latest.Longitude?.toFixed(5));
+        setTxt('headingValue', Math.round(latest.Heading) + '°');
 
         if (window.tractorMap) {
             window.tractorMap.updatePosition(latest.Latitude, latest.Longitude, latest.Heading);
         }
 
+        // Refresh Chart (default 1h)
         this.filterDataByRange('1h');
     }
 
     filterDataByRange(range) {
-        if (this.data.length === 0) return;
+        if (this.data.length === 0 || !this.historyChart) return;
 
         const now = new Date();
         const hours = range === '24h' ? 24 : (range === '6h' ? 6 : 1);
         const cutoff = new Date(now - hours * 60 * 60 * 1000);
 
-        const filtered = this.data.filter(d => d.date >= cutoff).reverse();
-
-        if (!this.historyChart) return;
+        const filtered = this.data.filter(d => d.date >= cutoff).reverse(); // Oldest first for chart
 
         this.historyChart.data.labels = filtered.map(d =>
             d.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -186,26 +199,28 @@ class TractorDashboard {
     }
 
     startAutoRefresh() {
-        setInterval(() => this.fetchData(), this.config.refreshInterval || 30000);
+        const interval = this.config.refreshInterval || 10000;
+        console.log(`Starting auto-refresh every ${interval}ms`);
+        setInterval(() => this.fetchData(), interval);
     }
 
-    setText(id, val) { const el = document.getElementById(id); if (el) el.textContent = (val !== undefined && val !== null) ? val : '--'; }
-    setWidth(id, pct) { const el = document.getElementById(id); if (el) el.style.width = `${pct}%`; }
-    calcPercent(val, min, max) { if (val === undefined || val === null) return 0; return Math.min(100, Math.max(0, ((val - min) / (max - min)) * 100)); }
     updateConnectionStatus(status) {
         const dot = document.getElementById('connectionStatus');
         const text = document.getElementById('statusText');
-        dot.className = 'status-dot ' + status;
-        text.textContent = status === 'connected' ? 'Connected' : (status === 'error' ? 'Error' : 'Connecting...');
+        if (dot) dot.className = 'status-dot ' + status;
+        if (text) text.textContent = status === 'connected' ? 'Connected' : (status === 'error' ? 'Connection Error' : 'Connecting...');
     }
     updateLastUpdate() {
         const el = document.getElementById('lastUpdate');
         if (el) el.textContent = `Last update: ${new Date().toLocaleTimeString()}`;
     }
-
-    loadDemoData() { /* Skipping to save space, real data preferred */ }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Check if configuration exists
+    if (!window.DASHBOARD_CONFIG) {
+        console.error("Configuration missing! Make sure window.DASHBOARD_CONFIG is defined in index.html");
+        return;
+    }
     window.dashboard = new TractorDashboard(window.DASHBOARD_CONFIG);
 });
