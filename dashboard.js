@@ -225,3 +225,4 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     window.dashboard = new TractorDashboard(window.DASHBOARD_CONFIG);
 });
+
