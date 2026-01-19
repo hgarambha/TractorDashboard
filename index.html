@@ -34,7 +34,46 @@
         </header>
 
         <main class="main">
-            <!-- ... (Same UI layout as before) ... -->
+            <!-- Diagnostics Panel - Always Visible -->
+            <section class="diagnostics-section" id="diagnosticsSection">
+                <div class="diag-header">
+                    <h2>🔧 System Diagnostics</h2>
+                    <button class="history-btn" id="showHistoryBtn" onclick="window.dashboard.showDiagHistory()">
+                        📋 History
+                    </button>
+                </div>
+                <div class="diag-status" id="diagStatus">
+                    <div class="status-indicator ok" id="statusIndicator">
+                        <span class="status-icon">✅</span>
+                        <span class="status-text">All Systems OK</span>
+                    </div>
+                </div>
+                <div class="fault-list" id="faultList" style="display: none;">
+                    <!-- Active faults will be listed here -->
+                </div>
+            </section>
+
+            <!-- Diagnostic History Modal -->
+            <div class="modal-overlay" id="historyModal" style="display: none;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>📋 Diagnostic History</h2>
+                        <button class="modal-close" onclick="window.dashboard.closeHistoryModal()">✕</button>
+                    </div>
+                    <div class="modal-tabs">
+                        <button class="tab-btn active" data-status="all"
+                            onclick="window.dashboard.filterHistory('all')">All</button>
+                        <button class="tab-btn" data-status="active"
+                            onclick="window.dashboard.filterHistory('active')">Active</button>
+                        <button class="tab-btn" data-status="resolved"
+                            onclick="window.dashboard.filterHistory('resolved')">Resolved</button>
+                    </div>
+                    <div class="history-list" id="historyList">
+                        <div class="loading">Loading history...</div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Gauges -->
             <section class="gauges-section">
                 <!-- RPM Card -->
@@ -144,7 +183,7 @@
     <script>
         // Paste your Apps Script Web App URL here!
         window.DASHBOARD_CONFIG = {
-            webAppUrl: 'https://script.google.com/macros/s/AKfycbwVF9FtLNUTn0k80wht7NvMoyw6K_-uEY15_Je4ZHcwSUphwioerIHOV-Lvt1_ziIrrgg/exec',
+            webAppUrl: 'https://script.google.com/macros/s/AKfycbxsdnWG9yU2z_BTyGmFCLN70GnFiHjxygmNZdxud7s5LFzjCCGxb8dPp_eQjmuLWauKoQ/exec',
             refreshInterval: 10000
         };
     </script>
