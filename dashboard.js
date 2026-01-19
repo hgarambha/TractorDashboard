@@ -166,8 +166,156 @@ class TractorDashboard {
             window.tractorMap.updatePosition(latest.Latitude, latest.Longitude, latest.Heading);
         }
 
+        // Update Diagnostics Panel (always visible)
+        this.updateDiagnostics(latest);
+
         // Refresh Chart (default 1h)
         this.filterDataByRange('1h');
+    }
+
+    updateDiagnostics(data) {
+        const statusIndicator = document.getElementById('statusIndicator');
+        const faultList = document.getElementById('faultList');
+
+        if (!statusIndicator) return;
+
+        const hasFaults = data.HasFaults === true || data.HasFaults === 'true';
+        const faultCount = parseInt(data.FaultCount) || 0;
+        const alertLevel = data.AlertLevel || 'ok';
+        const faultDescriptions = data.FaultDescriptions || '';
+
+        // Update status indicator
+        statusIndicator.className = 'status-indicator ' + alertLevel;
+
+        if (alertLevel === 'critical') {
+            statusIndicator.innerHTML = '<span class="status-icon">🔴</span><span class="status-text">CRITICAL - Stop Engine! (' + faultCount + ' faults)</span>';
+            faultList.style.display = 'block';
+        } else if (alertLevel === 'warning') {
+            statusIndicator.innerHTML = '<span class="status-icon">🟡</span><span class="status-text">Warning - ' + faultCount + ' issue(s) detected</span>';
+            faultList.style.display = 'block';
+        } else if (alertLevel === 'info') {
+            statusIndicator.innerHTML = '<span class="status-icon">🔵</span><span class="status-text">Check Engine - ' + faultCount + ' code(s)</span>';
+            faultList.style.display = 'block';
+        } else {
+            statusIndicator.innerHTML = '<span class="status-icon">✅</span><span class="status-text">All Systems OK</span>';
+            faultList.style.display = 'none';
+        }
+
+        // Display active faults
+        faultList.innerHTML = '';
+        if (faultDescriptions && hasFaults) {
+            const faults = faultDescriptions.split(';').filter(f => f.trim());
+            faults.forEach(fault => {
+                const item = document.createElement('div');
+                item.className = 'fault-item ' + alertLevel;
+                item.innerHTML = `<div class="fault-info"><span class="fault-desc">${fault.trim()}</span></div>`;
+                faultList.appendChild(item);
+            });
+        }
+    }
+
+    async showDiagHistory() {
+        const modal = document.getElementById('historyModal');
+        const historyList = document.getElementById('historyList');
+
+        if (!modal) return;
+
+        modal.style.display = 'flex';
+        historyList.innerHTML = '<div class="loading">Loading history...</div>';
+
+        try {
+            const response = await fetch(`${this.config.webAppUrl}?action=diagnostics&status=all`);
+            const result = await response.json();
+
+            if (result.status === 'ok') {
+                this.diagHistory = result.diagnostics || [];
+                this.renderHistoryList(this.diagHistory);
+            }
+        } catch (error) {
+            historyList.innerHTML = '<div class="loading">Failed to load history</div>';
+            console.error('History fetch error:', error);
+        }
+    }
+
+    closeHistoryModal() {
+        const modal = document.getElementById('historyModal');
+        if (modal) modal.style.display = 'none';
+    }
+
+    filterHistory(status) {
+        // Update tab buttons
+        document.querySelectorAll('.modal-tabs .tab-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.status === status);
+        });
+
+        if (!this.diagHistory) return;
+
+        const filtered = status === 'all'
+            ? this.diagHistory
+            : this.diagHistory.filter(d => d.status === status);
+
+        this.renderHistoryList(filtered);
+    }
+
+    renderHistoryList(items) {
+        const historyList = document.getElementById('historyList');
+        if (!historyList) return;
+
+        if (!items || items.length === 0) {
+            historyList.innerHTML = '<div class="no-faults">No diagnostic history found</div>';
+            return;
+        }
+
+        historyList.innerHTML = items.map(item => {
+            const firstSeen = item.firstSeen ? new Date(item.firstSeen).toLocaleString() : 'Unknown';
+            const lastSeen = item.lastSeen ? new Date(item.lastSeen).toLocaleString() : 'Unknown';
+            const resolveBtn = item.status === 'active'
+                ? `<button class="resolve-btn" onclick="window.dashboard.resolveIssue('${item.id}')">✓ Mark Resolved</button>`
+                : `<span style="color:var(--accent-success)">✓ Resolved ${item.resolvedAt ? new Date(item.resolvedAt).toLocaleDateString() : ''}</span>`;
+
+            return `
+                <div class="history-item ${item.status}">
+                    <div class="history-item-header">
+                        <span class="history-item-title">SPN ${item.spn} / FMI ${item.fmi}</span>
+                        <span class="history-item-status ${item.status}">${item.status}</span>
+                    </div>
+                    <div class="history-item-desc">${item.description || 'No description'}</div>
+                    <div class="history-item-meta">
+                        Category: ${item.category || 'unknown'} | 
+                        Occurrences: ${item.occurrenceCount || 1} | 
+                        First: ${firstSeen}
+                    </div>
+                    <div class="history-item-actions">${resolveBtn}</div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    async resolveIssue(id) {
+        if (!confirm('Mark this issue as resolved?')) return;
+
+        try {
+            const response = await fetch(this.config.webAppUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'resolve',
+                    id: id,
+                    resolvedBy: 'Dashboard User',
+                    notes: 'Resolved via dashboard'
+                })
+            });
+
+            const result = await response.json();
+            if (result.status === 'ok') {
+                alert('Issue marked as resolved!');
+                this.showDiagHistory(); // Refresh
+            } else {
+                alert('Failed to resolve: ' + result.message);
+            }
+        } catch (error) {
+            alert('Error: ' + error.message);
+        }
     }
 
     filterDataByRange(range) {
@@ -225,4 +373,3 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     window.dashboard = new TractorDashboard(window.DASHBOARD_CONFIG);
 });
-
