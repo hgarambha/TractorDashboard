@@ -158,19 +158,25 @@ class AnalysisMod {
 
     loadData(range = '1h') {
         const customControls = document.getElementById('custom-date-range');
-        if (range === 'custom') {
-            if (customControls) customControls.style.display = 'flex';
-            // Don't auto-load, wait for "Go" button or dates
-            return;
+
+        // Persist "custom" visibility if we are in custom mode
+        if (range === 'custom' || range === 'custom_date') {
+            if (customControls) {
+                customControls.style.display = 'flex';
+                customControls.style.visibility = 'visible'; // Ensure it's not hidden
+            }
+            if (range === 'custom') return; // Wait for user to click "Go"
         } else {
             if (customControls) customControls.style.display = 'none';
         }
 
         let data = this.dashboard.data; // Already sorted Newest -> Oldest
-
         let filtered = [];
 
-        if (range === 'custom_date') {
+        // Synchronize: if we are updating (e.g. comparison added), use existing dates
+        const currentRange = document.getElementById('analysisTimeRange').value;
+
+        if (range === 'custom_date' || (currentRange === 'custom' && range === 'refresh')) {
             const startStr = document.getElementById('analysisStart').value;
             const endStr = document.getElementById('analysisEnd').value;
             if (!startStr || !endStr) return;
@@ -181,7 +187,13 @@ class AnalysisMod {
 
             filtered = data.filter(d => d.date >= start && d.date <= end).reverse();
         } else {
-            const hours = range === '24h' ? 24 : (range === '6h' ? 6 : 1);
+            const rangeToUse = range === 'refresh' ? currentRange : range;
+            if (rangeToUse === 'custom' || rangeToUse === 'custom_date') {
+                // Recursive call or similar logic to handle sync
+                this.loadData('custom_date');
+                return;
+            }
+            const hours = rangeToUse === '24h' ? 24 : (rangeToUse === '6h' ? 6 : 1);
             const now = new Date();
             const cutoff = new Date(now - hours * 3600000);
             filtered = data.filter(d => d.date >= cutoff).reverse(); // Oldest first
@@ -243,10 +255,8 @@ class AnalysisMod {
     }
 
     updateComparison() {
-        // Trigger reload (which calls updateChartData)
-        // Ideally we just re-render chart without re-filtering data
-        const range = document.getElementById('analysisTimeRange').value;
-        this.loadData(range);
+        // Trigger reload using 'refresh' mode which preserves current range (including custom)
+        this.loadData('refresh');
     }
 
     calculateStats(data) {
