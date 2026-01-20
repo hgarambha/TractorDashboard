@@ -334,46 +334,86 @@ class TractorDashboard {
         setTimeout(() => document.getElementById('resolveName').focus(), 100);
     }
 
-    cancelResolve() {
-        const overlay = document.getElementById('resolveOverlay');
-        if (overlay) overlay.remove();
-    }
 
     async confirmResolve(id) {
         const name = document.getElementById('resolveName').value;
         const notes = document.getElementById('resolveNotes').value;
 
         if (!name) {
-            alert('Please enter your name or ID');
+            alert('Please enter your name/ID');
             return;
         }
 
-        this.cancelResolve(); // Close modal
+        const payload = {
+            action: 'resolve',
+            id: id,
+            resolvedBy: name,
+            notes: notes
+        };
 
+        try {
+            // Use no-cors mode logic or simple text/plain to avoid preflight
+            const response = await fetch(this.config.webAppUrl, {
+                method: 'POST',
+                mode: 'no-cors', // Important for simple requests to Apps Script
+                headers: {
+                    'Content-Type': 'text/plain;charset=utf-8',
+                },
+                body: JSON.stringify(payload)
+            });
+
+            // With no-cors, we get an opaque response. We assume success if no network error.
+            // Ideally Apps Script returns JSON, but we can't read it in no-cors.
+            // For better reliability without no-cors, we use text/plain which skips preflight
+            // but we need to check if we can read the response.
+            // Let's try standard fetch with text/plain first which usually works for Apps Script.
+
+            // Actually, for Apps Script, 'text/plain' allows reading response AND skips preflight
+            // provided we don't use custom headers.
+        } catch (e) {
+            console.log("Fetch attempted");
+        }
+
+        // Re-do fetch with clean logic for Apps Script
         try {
             const response = await fetch(this.config.webAppUrl, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'resolve',
-                    id: id,
-                    resolvedBy: name,
-                    notes: notes || 'Resolved via dashboard'
-                })
+                headers: {
+                    'Content-Type': 'text/plain;charset=utf-8',
+                },
+                body: JSON.stringify(payload)
             });
 
             const result = await response.json();
+
             if (result.status === 'ok') {
-                alert('Issue marked as resolved!');
-                this.showDiagHistory(); // Refresh
+                alert('Issue resolved!');
+                this.closeHistoryModal();
+                this.update(); // Refresh data
+                document.getElementById('resolveOverlay').remove();
             } else {
-                alert('Failed to resolve: ' + result.message);
+                alert('Error: ' + result.message);
             }
         } catch (error) {
-            alert('Error: ' + error.message);
+            console.error('Resolve error:', error);
+            alert('Failed to resolve issue. Check console.');
         }
     }
 
+    cancelResolve() {
+        const overlay = document.getElementById('resolveOverlay');
+        if (overlay) overlay.remove();
+    }
+
+    toggleMapFullscreen() {
+        const mapCard = document.querySelector('.map-card');
+        mapCard.classList.toggle('map-fullscreen');
+
+        // Trigger resize event for Leaflet
+        setTimeout(() => {
+            window.dispatchEvent(new Event('resize'));
+        }, 100);
+    }
     filterDataByRange(range) {
         if (this.data.length === 0 || !this.historyChart) return;
 
