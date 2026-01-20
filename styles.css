@@ -993,3 +993,74 @@ body {
         gap: var(--space-md);
     }
 }
+
+/* Map Fullscreen */
+.map-fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 3000;
+    border-radius: 0;
+    margin: 0;
+}
+
+.map-fullscreen #map {
+    height: calc(100vh - 60px);
+    /* Adjust for header */
+}
+
+/* Enhanced Modal */
+.modal-content {
+    background: var(--bg-card);
+    padding: 0;
+    border-radius: var(--radius-lg);
+    width: 90%;
+    max-width: 1200px;
+    /* Much wider */
+    height: 90vh;
+    /* Taller */
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-xl);
+    overflow: hidden;
+}
+
+.modal-header {
+    padding: var(--space-md) var(--space-xl);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.history-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-md);
+}
+
+/* Date Inputs */
+.date-input {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    color-scheme: dark;
+    /* Force dark calendar picker */
+}
+
+.date-input::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    cursor: pointer;
+}
+
+.custom-date-range {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
