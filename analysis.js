@@ -52,6 +52,12 @@ class AnalysisMod {
                         <h2>📊 ${mainParam.label} Analysis</h2>
                     </div>
                     <div class="analysis-controls">
+                        <div id="custom-date-range" class="custom-date-range" style="display: none; gap: 5px; align-items: center; margin-right: 10px;">
+                            <input type="date" id="analysisStart" class="date-input">
+                            <span style="color: #888;">to</span>
+                            <input type="date" id="analysisEnd" class="date-input">
+                            <button onclick="analysis.applyCustomRange()" class="btn-sm">Go</button>
+                        </div>
                         <select id="analysisTimeRange" class="time-select">
                             <option value="1h">Last 1 Hour</option>
                             <option value="6h">Last 6 Hours</option>
@@ -151,23 +157,42 @@ class AnalysisMod {
     }
 
     loadData(range = '1h') {
-        // Filter dashboard data based on range
-        // Note: Ideally we fetch history from server for longer ranges.
-        // For now, we use local cache (this.dashboard.data)
+        const customControls = document.getElementById('custom-date-range');
+        if (range === 'custom') {
+            if (customControls) customControls.style.display = 'flex';
+            // Don't auto-load, wait for "Go" button or dates
+            return;
+        } else {
+            if (customControls) customControls.style.display = 'none';
+        }
 
         let data = this.dashboard.data; // Already sorted Newest -> Oldest
 
-        // Simple filter based on time if needed (currently using all loaded data roughly)
-        // If we had a real backend, we'd fetch here.
-        // Simulating the slice:
-        const hours = range === '24h' ? 24 : (range === '6h' ? 6 : 1);
-        const now = new Date();
-        const cutoff = new Date(now - hours * 3600000);
+        let filtered = [];
 
-        const filtered = data.filter(d => d.date >= cutoff).reverse(); // Oldest first
+        if (range === 'custom_date') {
+            const startStr = document.getElementById('analysisStart').value;
+            const endStr = document.getElementById('analysisEnd').value;
+            if (!startStr || !endStr) return;
+
+            const start = new Date(startStr);
+            const end = new Date(endStr);
+            end.setHours(23, 59, 59, 999); // End of day
+
+            filtered = data.filter(d => d.date >= start && d.date <= end).reverse();
+        } else {
+            const hours = range === '24h' ? 24 : (range === '6h' ? 6 : 1);
+            const now = new Date();
+            const cutoff = new Date(now - hours * 3600000);
+            filtered = data.filter(d => d.date >= cutoff).reverse(); // Oldest first
+        }
 
         this.updateChartData(filtered);
         this.calculateStats(filtered);
+    }
+
+    applyCustomRange() {
+        this.loadData('custom_date');
     }
 
     updateChartData(data) {
