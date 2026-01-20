@@ -57,7 +57,7 @@ class TractorMap {
                 historyBtn.classList.remove('active');
                 this.clearHistory();
                 if (this.marker) {
-                    this.map.setView(this.marker.getLatLng(), 15);
+                    this.map.flyTo(this.marker.getLatLng(), 15, { duration: 0.5 });
                 }
             });
         }
@@ -67,9 +67,14 @@ class TractorMap {
                 this.showHistory = true;
                 historyBtn.classList.add('active');
                 liveBtn.classList.remove('active');
-                // History will be drawn on next data update
+
                 if (window.dashboard && window.dashboard.data.length > 0) {
                     this.updateHistory(window.dashboard.data.slice().reverse());
+                } else if (window.dashboard) {
+                    // Try to fetch if no data
+                    window.dashboard.fetchData().then(() => {
+                        if (this.showHistory) this.updateHistory(window.dashboard.data.slice().reverse());
+                    });
                 }
             });
         }
