@@ -68,6 +68,17 @@
                         <button class="tab-btn" data-status="resolved"
                             onclick="window.dashboard.filterHistory('resolved')">Resolved</button>
                     </div>
+                    <div class="modal-filters"
+                        style="padding: 10px 20px; display: flex; gap: 10px; align-items: center; border-bottom: 1px solid var(--border-color);">
+                        <span style="color: var(--text-secondary); font-size: 0.9em;">Filter Date:</span>
+                        <input type="date" id="histStart" class="date-input"
+                            style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); color: white; padding: 5px; border-radius: 4px;">
+                        <span style="color: var(--text-secondary);">-</span>
+                        <input type="date" id="histEnd" class="date-input"
+                            style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); color: white; padding: 5px; border-radius: 4px;">
+                        <button onclick="window.dashboard.showDiagHistory()"
+                            style="background: var(--accent-primary); border: none; color: white; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Apply</button>
+                    </div>
                     <div class="history-list" id="historyList">
                         <div class="loading">Loading history...</div>
                     </div>
@@ -77,17 +88,17 @@
             <!-- Gauges -->
             <section class="gauges-section">
                 <!-- RPM Card -->
-                <div class="gauge-card" id="rpmCard">
-                    <div class="gauge-header"><span class="gauge-icon">⚡</span><span class="gauge-title">Engine
+                <div class="gauge-card" onclick="openAnalysis('EngineSpeed')">
+                    <div class="gauge-header"><span class="gauge-icon">⚙️</span><span class="gauge-title">Engine
                             RPM</span></div>
-                    <div class="gauge-value"><span id="rpmValue">--</span><span class="gauge-unit">rpm</span></div>
+                    <div class="gauge-value"><span id="rpmValue">--</span><span class="gauge-unit">RPM</span></div>
                     <div class="gauge-bar">
                         <div class="gauge-fill" id="rpmFill" style="width: 0%"></div>
                     </div>
                 </div>
                 <!-- Speed Card -->
-                <div class="gauge-card">
-                    <div class="gauge-header"><span class="gauge-icon">🏎️</span><span class="gauge-title">Speed</span>
+                <div class="gauge-card" onclick="openAnalysis('WheelBasedVehicleSpeed')">
+                    <div class="gauge-header"><span class="gauge-icon">🚜</span><span class="gauge-title">Speed</span>
                     </div>
                     <div class="gauge-value"><span id="speedValue">--</span><span class="gauge-unit">km/h</span></div>
                     <div class="gauge-bar">
@@ -95,7 +106,7 @@
                     </div>
                 </div>
                 <!-- Fuel Card -->
-                <div class="gauge-card">
+                <div class="gauge-card" onclick="openAnalysis('FuelLevel')">
                     <div class="gauge-header"><span class="gauge-icon">⛽</span><span class="gauge-title">Fuel
                             Level</span></div>
                     <div class="gauge-value"><span id="fuelValue">--</span><span class="gauge-unit">%</span></div>
@@ -104,7 +115,7 @@
                     </div>
                 </div>
                 <!-- Temp Card -->
-                <div class="gauge-card">
+                <div class="gauge-card" onclick="openAnalysis('EngineCoolantTemp')">
                     <div class="gauge-header"><span class="gauge-icon">🌡️</span><span class="gauge-title">Coolant
                             Temp</span></div>
                     <div class="gauge-value"><span id="tempValue">--</span><span class="gauge-unit">°C</span></div>
@@ -151,22 +162,22 @@
             <!-- Stats -->
             <section class="stats-section">
                 <!-- ... (Same stats cards) ... -->
-                <div class="stat-card">
+                <div class="stat-card" onclick="openAnalysis('EngineOilPressure')">
                     <span class="stat-icon">🛢️</span>
                     <div class="stat-content"><span class="stat-value" id="oilPressure">--</span><span
                             class="stat-label">Oil Pressure (kPa)</span></div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" onclick="openAnalysis('AmbientAirTemp')">
                     <span class="stat-icon">💨</span>
                     <div class="stat-content"><span class="stat-value" id="ambientTemp">--</span><span
                             class="stat-label">Ambient Temp (°C)</span></div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" onclick="openAnalysis('EnginePercentTorque')">
                     <span class="stat-icon">📊</span>
                     <div class="stat-content"><span class="stat-value" id="torque">--</span><span
                             class="stat-label">Engine Torque (%)</span></div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" onclick="openAnalysis('Altitude')">
                     <span class="stat-icon">⛰️</span>
                     <div class="stat-content"><span class="stat-value" id="altitude">--</span><span
                             class="stat-label">Altitude (m)</span></div>
@@ -183,13 +194,28 @@
     <script>
         // Paste your Apps Script Web App URL here!
         window.DASHBOARD_CONFIG = {
-            webAppUrl: 'https://script.google.com/macros/s/AKfycbxsdnWG9yU2z_BTyGmFCLN70GnFiHjxygmNZdxud7s5LFzjCCGxb8dPp_eQjmuLWauKoQ/exec',
+            webAppUrl: 'https://script.google.com/macros/s/AKfycbxfLHeL6Iq3_9tm7aZCoC_gjj7AU_mpwl6bSF1gYEM9jbll9fqnw1XknoAAhP9UaRS-GQ/exec',
             refreshInterval: 10000
         };
     </script>
 
     <script src="dashboard.js"></script>
     <script src="map.js"></script>
+    <script src="analysis.js"></script>
+    <script>
+        // Init Analysis when dashboard is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            // Wait for dashboard instance
+            setTimeout(() => {
+                if (window.dashboard) window.initAnalysis(window.dashboard);
+            }, 500);
+        });
+
+        // Helper to open analysis
+        function openAnalysis(param) {
+            if (window.analysis) window.analysis.open(param);
+        }
+    </script>
 </body>
 
 </html>
