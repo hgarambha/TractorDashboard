@@ -280,9 +280,22 @@ class TractorDashboard {
         historyList.innerHTML = items.map(item => {
             const firstSeen = item.firstSeen ? new Date(item.firstSeen).toLocaleString() : 'Unknown';
             const lastSeen = item.lastSeen ? new Date(item.lastSeen).toLocaleString() : 'Unknown';
-            const resolveBtn = item.status === 'active'
-                ? `<button class="resolve-btn" onclick="window.dashboard.resolveIssue('${item.id}')">✓ Mark Resolved</button>`
-                : `<span style="color:var(--accent-success)">✓ Resolved ${item.resolvedAt ? new Date(item.resolvedAt).toLocaleDateString() : ''}</span>`;
+
+            let actionHtml = '';
+            if (item.status === 'active') {
+                actionHtml = `<button class="resolve-btn" onclick="window.dashboard.resolveIssue('${item.id}')">✓ Mark Resolved</button>`;
+            } else {
+                const resolvedAt = item.resolvedAt ? new Date(item.resolvedAt).toLocaleString() : '';
+                actionHtml = `
+                    <div class="resolution-info">
+                        <div class="resolution-meta">
+                            <span class="resolved-check">✓ Resolved:</span> ${resolvedAt}
+                        </div>
+                        ${item.resolvedBy ? `<div class="resolved-by"><strong>By:</strong> ${item.resolvedBy}</div>` : ''}
+                        ${item.notes ? `<div class="resolved-notes"><strong>Notes:</strong> ${item.notes}</div>` : ''}
+                    </div>
+                `;
+            }
 
             return `
                 <div class="history-item ${item.status}">
@@ -296,7 +309,7 @@ class TractorDashboard {
                         Occurrences: ${item.occurrenceCount || 1} | 
                         First: ${firstSeen}
                     </div>
-                    <div class="history-item-actions">${resolveBtn}</div>
+                    <div class="history-item-actions">${actionHtml}</div>
                 </div>
             `;
         }).join('');
