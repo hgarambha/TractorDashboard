@@ -223,13 +223,24 @@ class TractorDashboard {
         modal.style.display = 'flex';
         historyList.innerHTML = '<div class="loading">Loading history...</div>';
 
+        // Get date filters
+        const start = document.getElementById('histStart')?.value;
+        const end = document.getElementById('histEnd')?.value;
+
+        let url = `${this.config.webAppUrl}?action=diagnostics&status=all`;
+        if (start) url += `&start_date=${start}`;
+        if (end) url += `&end_date=${end}`;
+
         try {
-            const response = await fetch(`${this.config.webAppUrl}?action=diagnostics&status=all`);
+            const response = await fetch(url);
             const result = await response.json();
 
             if (result.status === 'ok') {
                 this.diagHistory = result.diagnostics || [];
-                this.renderHistoryList(this.diagHistory);
+                // Re-apply current tab filter
+                const activeTab = document.querySelector('.modal-tabs .tab-btn.active');
+                const currentStatus = activeTab ? activeTab.dataset.status : 'all';
+                this.filterHistory(currentStatus);
             }
         } catch (error) {
             historyList.innerHTML = '<div class="loading">Failed to load history</div>';
@@ -292,7 +303,52 @@ class TractorDashboard {
     }
 
     async resolveIssue(id) {
-        if (!confirm('Mark this issue as resolved?')) return;
+        const modalHtml = `
+            <div class="resolve-modal">
+                <div class="resolve-form">
+                    <h3>Resolve Diagnostic Issue</h3>
+                    <div class="form-group">
+                        <label>Resolved By:</label>
+                        <input type="text" id="resolveName" placeholder="Enter your name/ID">
+                    </div>
+                    <div class="form-group">
+                        <label>Notes/Action Taken:</label>
+                        <textarea id="resolveNotes" placeholder="Describe the fix..."></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button onclick="window.dashboard.confirmResolve('${id}')" class="btn-primary">Confirm</button>
+                        <button onclick="window.dashboard.cancelResolve()" class="btn-secondary">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Simple overlay injection for prompt
+        const overlay = document.createElement('div');
+        overlay.id = 'resolveOverlay';
+        overlay.className = 'modal-overlay';
+        overlay.innerHTML = modalHtml;
+        document.body.appendChild(overlay);
+
+        // Focus input
+        setTimeout(() => document.getElementById('resolveName').focus(), 100);
+    }
+
+    cancelResolve() {
+        const overlay = document.getElementById('resolveOverlay');
+        if (overlay) overlay.remove();
+    }
+
+    async confirmResolve(id) {
+        const name = document.getElementById('resolveName').value;
+        const notes = document.getElementById('resolveNotes').value;
+
+        if (!name) {
+            alert('Please enter your name or ID');
+            return;
+        }
+
+        this.cancelResolve(); // Close modal
 
         try {
             const response = await fetch(this.config.webAppUrl, {
@@ -301,8 +357,8 @@ class TractorDashboard {
                 body: JSON.stringify({
                     action: 'resolve',
                     id: id,
-                    resolvedBy: 'Dashboard User',
-                    notes: 'Resolved via dashboard'
+                    resolvedBy: name,
+                    notes: notes || 'Resolved via dashboard'
                 })
             });
 
