@@ -49,6 +49,24 @@ class TractorMap {
     setupControls() {
         const liveBtn = document.getElementById('showLiveBtn');
         const historyBtn = document.getElementById('showHistoryBtn');
+        const timeSelector = document.getElementById('mapTimeSelector');
+        const timeBtns = timeSelector ? timeSelector.querySelectorAll('.time-btn') : [];
+
+        // Handle Time Range Click
+        timeBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                // Remove active from all
+                timeBtns.forEach(b => b.classList.remove('active'));
+                // Add to clicked
+                e.target.classList.add('active');
+
+                // Redraw history with new range
+                const range = e.target.dataset.range; // 1h, 6h, 24h
+                if (window.dashboard && window.dashboard.data) {
+                    this.updateHistory(window.dashboard.data.slice().reverse(), range);
+                }
+            });
+        });
 
         if (liveBtn) {
             liveBtn.addEventListener('click', () => {
@@ -56,9 +74,9 @@ class TractorMap {
                 this.showHistory = false;
                 liveBtn.classList.add('active');
                 historyBtn.classList.remove('active');
-                this.clearHistory();
+                if (timeSelector) timeSelector.style.display = 'none';
 
-                // Force map update
+                this.clearHistory();
                 this.map.invalidateSize();
 
                 if (this.marker) {
@@ -75,14 +93,18 @@ class TractorMap {
                 this.showHistory = true;
                 historyBtn.classList.add('active');
                 liveBtn.classList.remove('active');
+                if (timeSelector) timeSelector.style.display = 'flex';
 
-                // Force map update
                 this.map.invalidateSize();
 
                 // Check for data immediately
                 if (window.dashboard && window.dashboard.data && window.dashboard.data.length > 0) {
-                    console.log(`Map: Found ${window.dashboard.data.length} data points immediately.`);
-                    this.updateHistory(window.dashboard.data.slice().reverse());
+                    // Default to 1h for performance
+                    const activeTimeBtn = timeSelector ? timeSelector.querySelector('.active') : null;
+                    const range = activeTimeBtn ? activeTimeBtn.dataset.range : '1h';
+
+                    console.log(`Map: Loading history (${range})...`);
+                    this.updateHistory(window.dashboard.data.slice().reverse(), range);
                 } else {
                     console.warn('Map: No data available for history yet.');
                 }
@@ -131,24 +153,29 @@ class TractorMap {
         }
     }
 
-    updateHistory(data) {
+    updateHistory(data, range = '1h') {
         if (!this.showHistory) {
-            // console.log('Map: Hiding history (mode off)'); 
             return;
         }
 
-        // Filter data with valid coordinates
+        // Filter by time range
+        const now = new Date();
+        const hrs = range === '24h' ? 24 : (range === '6h' ? 6 : 1);
+        const cutoff = new Date(now - hrs * 3600000);
+
+        // Filter data with valid coordinates AND time range
         const validData = data.filter(d =>
             d.Latitude && d.Longitude &&
-            !isNaN(d.Latitude) && !isNaN(d.Longitude)
+            !isNaN(d.Latitude) && !isNaN(d.Longitude) &&
+            new Date(d.IsoTimestamp || d.date) >= cutoff
         );
 
-        console.log(`Map: Drawing history path with ${validData.length} points`);
-
-        if (validData.length === 0) return;
+        console.log(`Map: Drawing history path for last ${range} (${validData.length} points)`);
 
         // Clear existing history
         this.clearHistory();
+
+        if (validData.length === 0) return;
 
         // Create path coordinates
         const coordinates = validData.map(d => [d.Latitude, d.Longitude]);
