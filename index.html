@@ -87,26 +87,6 @@
 
             <!-- Gauges -->
             <section class="gauges-section">
-                <!-- Stats Row 2: Performance & Electrical -->
-                <div class="stats-grid" style="margin-top: 20px;">
-                    <div class="stat-card" data-param="EngineFuelRate">
-                        <div class="stat-icon icon-fuel">⛽</div>
-                        <div class="stat-info">
-                            <span class="stat-label">Fuel Rate</span>
-                            <span class="stat-value" id="fuelRate">--</span>
-                            <span class="stat-unit">L/h</span>
-                        </div>
-                    </div>
-                    <div class="stat-card" data-param="ElectricalPotential">
-                        <div class="stat-icon icon-battery">⚡</div>
-                        <div class="stat-info">
-                            <span class="stat-label">Battery</span>
-                            <span class="stat-value" id="batteryVolts">--</span>
-                            <span class="stat-unit">V</span>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- RPM Card -->
                 <div class="gauge-card" onclick="openAnalysis('EngineSpeed')">
                     <div class="gauge-header"><span class="gauge-icon">⚙️</span><span class="gauge-title">Engine
@@ -200,9 +180,30 @@
                             class="stat-label">Engine Torque (%)</span></div>
                 </div>
                 <div class="stat-card" onclick="openAnalysis('Altitude')">
-                    <span class="stat-icon">⛰️</span>
-                    <div class="stat-content"><span class="stat-value" id="altitude">--</span><span
-                            class="stat-label">Altitude (m)</span></div>
+                    <div class="stat-icon">🏔️</div>
+                    <div class="stat-info">
+                        <span class="stat-label">Altitude</span>
+                        <span class="stat-value" id="altitude">--</span>
+                        <span class="stat-unit">m</span>
+                    </div>
+                </div>
+
+                <!-- Added: Fuel Rate & Battery -->
+                <div class="stat-card" onclick="openAnalysis('EngineFuelRate')">
+                    <div class="stat-icon icon-fuel">⛽</div>
+                    <div class="stat-info">
+                        <span class="stat-label">Fuel Rate</span>
+                        <span class="stat-value" id="fuelRate">--</span>
+                        <span class="stat-unit">L/h</span>
+                    </div>
+                </div>
+                <div class="stat-card" onclick="openAnalysis('ElectricalPotential')">
+                    <div class="stat-icon icon-battery">⚡</div>
+                    <div class="stat-info">
+                        <span class="stat-label">Battery</span>
+                        <span class="stat-value" id="batteryVolts">--</span>
+                        <span class="stat-unit">V</span>
+                    </div>
                 </div>
             </section>
         </main>
