@@ -1100,3 +1100,13 @@ body {
     font-size: 0.85rem;
     font-weight: 500;
 }
+
+.icon-fuel {
+    color: #f59e0b;
+    background: rgba(245, 158, 11, 0.1);
+}
+
+.icon-battery {
+    color: #8b5cf6;
+    background: rgba(139, 92, 246, 0.1);
+}
