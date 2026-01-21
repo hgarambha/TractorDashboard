@@ -157,6 +157,12 @@ class TractorDashboard {
         setTxt('torque', Math.round(latest.EnginePercentTorque));
         setTxt('altitude', Math.round(latest.Altitude));
 
+
+
+        // New Metrics
+        setTxt('fuelRate', latest.EngineFuelRate?.toFixed(1));
+        setTxt('batteryVolts', latest.ElectricalPotential?.toFixed(1));
+
         // Location
         setTxt('latValue', latest.Latitude?.toFixed(5));
         setTxt('lonValue', latest.Longitude?.toFixed(5));
