@@ -143,6 +143,12 @@
                     <div class="card-header">
                         <h2>Location Tracking</h2>
                         <div class="map-controls">
+                            <div class="map-time-selector" id="mapTimeSelector"
+                                style="display: none; margin-right: 10px;">
+                                <button class="time-btn active" data-range="1h">1H</button>
+                                <button class="time-btn" data-range="6h">6H</button>
+                                <button class="time-btn" data-range="24h">24H</button>
+                            </div>
                             <button class="map-btn active" id="showLiveBtn">Live</button>
                             <button class="map-btn" id="showHistoryBtn">History</button>
                             <button class="map-btn" onclick="window.dashboard.toggleMapFullscreen()"
