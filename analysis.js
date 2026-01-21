@@ -156,47 +156,53 @@ class AnalysisMod {
         });
     }
 
-    loadData(range = '1h') {
-        const customControls = document.getElementById('custom-date-range');
+    loadData(range) {
+        // If range is provided, update state. Otherwise use existing state.
+        if (range) {
+            this.currentRange = range;
+        } else {
+            range = this.currentRange || '1h';
+        }
 
-        // Persist "custom" visibility if we are in custom mode
+        const customControls = document.getElementById('custom-date-range');
+        const timeSelect = document.getElementById('analysisTimeRange');
+
+        // Update select dropdown if needed (e.g. initial load)
+        if (timeSelect && range !== 'custom_date' && range !== 'custom') {
+            timeSelect.value = range;
+        } else if (timeSelect && (range === 'custom_date' || range === 'custom')) {
+            timeSelect.value = 'custom';
+        }
+
+        // Handle Custom Range Visibility
         if (range === 'custom' || range === 'custom_date') {
-            if (customControls) {
-                customControls.style.display = 'flex';
-                customControls.style.visibility = 'visible'; // Ensure it's not hidden
-            }
-            if (range === 'custom') return; // Wait for user to click "Go"
+            if (customControls) customControls.style.display = 'flex';
+
+            // If just switching to custom mode without dates, wait for user
+            if (range === 'custom') return;
         } else {
             if (customControls) customControls.style.display = 'none';
         }
 
-        let data = this.dashboard.data; // Already sorted Newest -> Oldest
+        let data = this.dashboard.data;
         let filtered = [];
 
-        // Synchronize: if we are updating (e.g. comparison added), use existing dates
-        const currentRange = document.getElementById('analysisTimeRange').value;
-
-        if (range === 'custom_date' || (currentRange === 'custom' && range === 'refresh')) {
+        if (range === 'custom_date') {
             const startStr = document.getElementById('analysisStart').value;
             const endStr = document.getElementById('analysisEnd').value;
+
             if (!startStr || !endStr) return;
 
             const start = new Date(startStr);
             const end = new Date(endStr);
-            end.setHours(23, 59, 59, 999); // End of day
+            end.setHours(23, 59, 59, 999);
 
             filtered = data.filter(d => d.date >= start && d.date <= end).reverse();
         } else {
-            const rangeToUse = range === 'refresh' ? currentRange : range;
-            if (rangeToUse === 'custom' || rangeToUse === 'custom_date') {
-                // Recursive call or similar logic to handle sync
-                this.loadData('custom_date');
-                return;
-            }
-            const hours = rangeToUse === '24h' ? 24 : (rangeToUse === '6h' ? 6 : 1);
+            const hours = range === '24h' ? 24 : (range === '6h' ? 6 : 1);
             const now = new Date();
             const cutoff = new Date(now - hours * 3600000);
-            filtered = data.filter(d => d.date >= cutoff).reverse(); // Oldest first
+            filtered = data.filter(d => d.date >= cutoff).reverse();
         }
 
         this.updateChartData(filtered);
@@ -255,8 +261,10 @@ class AnalysisMod {
     }
 
     updateComparison() {
-        // Trigger reload using 'refresh' mode which preserves current range (including custom)
-        this.loadData('refresh');
+        // Trigger reload (which calls updateChartData)
+        // Ideally we just re-render chart without re-filtering data
+        const range = document.getElementById('analysisTimeRange').value;
+        this.loadData(range);
     }
 
     calculateStats(data) {
