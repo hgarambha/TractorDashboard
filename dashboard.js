@@ -161,7 +161,7 @@ class TractorDashboard {
 
         // New Metrics
         setTxt('fuelRate', latest.EngineFuelRate?.toFixed(1));
-        setTxt('batteryVolts', latest.ElectricalPotential?.toFixed(1));
+        setTxt('batteryVolts', latest.BatteryVoltage?.toFixed(1));
 
         // Location
         setTxt('latValue', latest.Latitude?.toFixed(5));
