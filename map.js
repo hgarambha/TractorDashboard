@@ -52,29 +52,39 @@ class TractorMap {
 
         if (liveBtn) {
             liveBtn.addEventListener('click', () => {
+                console.log('Map: Switching to Live Mode');
                 this.showHistory = false;
                 liveBtn.classList.add('active');
                 historyBtn.classList.remove('active');
                 this.clearHistory();
+
+                // Force map update
+                this.map.invalidateSize();
+
                 if (this.marker) {
-                    this.map.flyTo(this.marker.getLatLng(), 15, { duration: 0.5 });
+                    const latlng = this.marker.getLatLng();
+                    this.map.setView(latlng, 15);
+                    this.map.panTo(latlng);
                 }
             });
         }
 
         if (historyBtn) {
             historyBtn.addEventListener('click', () => {
+                console.log('Map: Switching to History Mode');
                 this.showHistory = true;
                 historyBtn.classList.add('active');
                 liveBtn.classList.remove('active');
 
-                if (window.dashboard && window.dashboard.data.length > 0) {
+                // Force map update
+                this.map.invalidateSize();
+
+                // Check for data immediately
+                if (window.dashboard && window.dashboard.data && window.dashboard.data.length > 0) {
+                    console.log(`Map: Found ${window.dashboard.data.length} data points immediately.`);
                     this.updateHistory(window.dashboard.data.slice().reverse());
-                } else if (window.dashboard) {
-                    // Try to fetch if no data
-                    window.dashboard.fetchData().then(() => {
-                        if (this.showHistory) this.updateHistory(window.dashboard.data.slice().reverse());
-                    });
+                } else {
+                    console.warn('Map: No data available for history yet.');
                 }
             });
         }
@@ -122,13 +132,18 @@ class TractorMap {
     }
 
     updateHistory(data) {
-        if (!this.showHistory) return;
+        if (!this.showHistory) {
+            // console.log('Map: Hiding history (mode off)'); 
+            return;
+        }
 
         // Filter data with valid coordinates
         const validData = data.filter(d =>
             d.Latitude && d.Longitude &&
             !isNaN(d.Latitude) && !isNaN(d.Longitude)
         );
+
+        console.log(`Map: Drawing history path with ${validData.length} points`);
 
         if (validData.length === 0) return;
 
