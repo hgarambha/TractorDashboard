@@ -282,19 +282,22 @@ class TractorDashboard {
             const lastSeen = item.lastSeen ? new Date(item.lastSeen).toLocaleString() : 'Unknown';
 
             let actionHtml = '';
+            let resolvedInfoHtml = '';
+
             if (item.status === 'active') {
                 actionHtml = `<button class="resolve-btn" onclick="window.dashboard.resolveIssue('${item.id}')">✓ Mark Resolved</button>`;
             } else {
-                const resolvedAt = item.resolvedAt ? new Date(item.resolvedAt).toLocaleString() : '';
-                actionHtml = `
-                    <div class="resolution-info">
-                        <div class="resolution-meta">
-                            <span class="resolved-check">✓ Resolved:</span> ${resolvedAt}
+                const resolvedDate = item.resolvedAt ? new Date(item.resolvedAt).toLocaleDateString() : '';
+                actionHtml = `<span style="color:var(--accent-success); font-weight:bold;">✓ Resolved ${resolvedDate}</span>`;
+
+                if (item.resolvedBy || item.notes) {
+                    resolvedInfoHtml = `
+                        <div class="resolved-details" style="margin-top: 8px; font-size: 0.85rem; color: var(--text-secondary); border-top: 1px solid var(--border-color); padding-top: 6px;">
+                            ${item.resolvedBy ? `<div><strong>By:</strong> ${item.resolvedBy}</div>` : ''}
+                            ${item.notes ? `<div><strong>Note:</strong> ${item.notes}</div>` : ''}
                         </div>
-                        ${item.resolvedBy ? `<div class="resolved-by"><strong>By:</strong> ${item.resolvedBy}</div>` : ''}
-                        ${item.notes ? `<div class="resolved-notes"><strong>Notes:</strong> ${item.notes}</div>` : ''}
-                    </div>
-                `;
+                    `;
+                }
             }
 
             return `
@@ -309,6 +312,7 @@ class TractorDashboard {
                         Occurrences: ${item.occurrenceCount || 1} | 
                         First: ${firstSeen}
                     </div>
+                    ${resolvedInfoHtml}
                     <div class="history-item-actions">${actionHtml}</div>
                 </div>
             `;
@@ -351,10 +355,17 @@ class TractorDashboard {
     async confirmResolve(id) {
         const name = document.getElementById('resolveName').value;
         const notes = document.getElementById('resolveNotes').value;
+        const confirmBtn = document.querySelector('.resolve-modal .btn-primary');
 
         if (!name) {
             alert('Please enter your name/ID');
             return;
+        }
+
+        // Show loading state
+        if (confirmBtn) {
+            confirmBtn.textContent = 'Resolving...';
+            confirmBtn.disabled = true;
         }
 
         const payload = {
@@ -364,52 +375,32 @@ class TractorDashboard {
             notes: notes
         };
 
+        const cleanup = () => {
+            document.getElementById('resolveOverlay')?.remove();
+        };
+
         try {
-            // Use no-cors mode logic or simple text/plain to avoid preflight
-            const response = await fetch(this.config.webAppUrl, {
+            // First try no-cors for speed/robustness against CORS errors on simple trigger
+            await fetch(this.config.webAppUrl, {
                 method: 'POST',
-                mode: 'no-cors', // Important for simple requests to Apps Script
-                headers: {
-                    'Content-Type': 'text/plain;charset=utf-8',
-                },
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify(payload)
             });
 
-            // With no-cors, we get an opaque response. We assume success if no network error.
-            // Ideally Apps Script returns JSON, but we can't read it in no-cors.
-            // For better reliability without no-cors, we use text/plain which skips preflight
-            // but we need to check if we can read the response.
-            // Let's try standard fetch with text/plain first which usually works for Apps Script.
-
-            // Actually, for Apps Script, 'text/plain' allows reading response AND skips preflight
-            // provided we don't use custom headers.
-        } catch (e) {
-            console.log("Fetch attempted");
-        }
-
-        // Re-do fetch with clean logic for Apps Script
-        try {
-            const response = await fetch(this.config.webAppUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'text/plain;charset=utf-8',
-                },
-                body: JSON.stringify(payload)
-            });
-
-            const result = await response.json();
-
-            if (result.status === 'ok') {
-                alert('Issue resolved!');
+            // Assume success with no-cors if no network error thrown
+            // Wait a short moment for script to process then reload
+            setTimeout(() => {
+                alert('Issue marked as resolved.');
+                cleanup();
                 this.closeHistoryModal();
-                this.update(); // Refresh data
-                document.getElementById('resolveOverlay').remove();
-            } else {
-                alert('Error: ' + result.message);
-            }
+                this.showDiagHistory(); // Re-open to show updated list
+            }, 1000);
+
         } catch (error) {
             console.error('Resolve error:', error);
-            alert('Failed to resolve issue. Check console.');
+            alert('Failed to resolve issue. Please try again.');
+            cleanup();
         }
     }
 
